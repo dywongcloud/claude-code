@@ -1,211 +1,130 @@
-# Commands Reference
+## Tasks, Queues & Agents
 
-> Complete catalog of all slash commands in Claude Code.
+| Command      | Source          | Description                                                                         |
+| ------------ | --------------- | ----------------------------------------------------------------------------------- |
+| `/queue`     | `queue/`        | Queue one or more prompts for sequential execution after the current task completes |
+| `/tasks`     | `tasks/`        | Manage background tasks                                                             |
+| `/agents`    | `agents/`       | Manage sub-agents                                                                   |
+| `/ultraplan` | `ultraplan.tsx` | Generate a detailed execution plan                                                  |
+| `/plan`      | `plan/`         | Enter planning mode                                                                 |
 
----
+### `/queue`
 
-## Overview
+Queue prompts for Claude Code to execute sequentially using the current session context.
 
-Commands are user-facing actions invoked with a `/` prefix in the REPL (e.g., `/commit`, `/review`). They live in `src/commands/` and are registered in `src/commands.ts`.
+#### Description
 
-### Command Types
+The `/queue` command allows users to submit additional prompts while Claude is actively working on another task. Queued prompts are executed automatically in FIFO order once the current task completes.
 
-| Type | Description | Example |
-|------|-------------|---------|
-| **PromptCommand** | Sends a formatted prompt to the LLM with injected tools | `/review`, `/commit` |
-| **LocalCommand** | Runs in-process, returns plain text | `/cost`, `/version` |
-| **LocalJSXCommand** | Runs in-process, returns React JSX | `/install`, `/doctor` |
+This enables users to plan multi-step workflows without manually waiting for each step to finish.
 
-### Command Definition Pattern
+#### Examples
 
-```typescript
-const command = {
-  type: 'prompt',
-  name: 'my-command',
-  description: 'What this command does',
-  progressMessage: 'working...',
-  allowedTools: ['Bash(git *)', 'FileRead(*)'],
-  source: 'builtin',
-  async getPromptForCommand(args, context) {
-    return [{ type: 'text', text: '...' }]
-  },
-} satisfies Command
+Queue a single task:
+
+```text
+/queue Add unit tests for the modified files
 ```
 
----
+Queue multiple tasks:
 
-## Git & Version Control
+```text
+/queue Run the test suite
+/queue Fix any failing tests
+/queue Update the README
+/queue Create a changelog entry
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/commit` | `commit.ts` | Create a git commit with an AI-generated message |
-| `/commit-push-pr` | `commit-push-pr.ts` | Commit, push, and create a PR in one step |
-| `/branch` | `branch/` | Create or switch git branches |
-| `/diff` | `diff/` | View file changes (staged, unstaged, or against a ref) |
-| `/pr_comments` | `pr_comments/` | View and address PR review comments |
-| `/rewind` | `rewind/` | Revert to a previous state |
+List queued tasks:
 
-## Code Quality
+```text
+/queue list
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/review` | `review.ts` | AI-powered code review of staged/unstaged changes |
-| `/security-review` | `security-review.ts` | Security-focused code review |
-| `/advisor` | `advisor.ts` | Get architectural or design advice |
-| `/bughunter` | `bughunter/` | Find potential bugs in the codebase |
+Remove a queued task:
 
-## Session & Context
+```text
+/queue remove <id>
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/compact` | `compact/` | Compress conversation context to fit more history |
-| `/context` | `context/` | Visualize current context (files, memory, etc.) |
-| `/resume` | `resume/` | Restore a previous conversation session |
-| `/session` | `session/` | Manage sessions (list, switch, delete) |
-| `/share` | `share/` | Share a session via link |
-| `/export` | `export/` | Export conversation to a file |
-| `/summary` | `summary/` | Generate a summary of the current session |
-| `/clear` | `clear/` | Clear the conversation history |
+Move a task:
 
-## Configuration & Settings
+```text
+/queue move <id> <position>
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/config` | `config/` | View or modify Claude Code settings |
-| `/permissions` | `permissions/` | Manage tool permission rules |
-| `/theme` | `theme/` | Change the terminal color theme |
-| `/output-style` | `output-style/` | Change output formatting style |
-| `/color` | `color/` | Toggle color output |
-| `/keybindings` | `keybindings/` | View or customize keybindings |
-| `/vim` | `vim/` | Toggle vim mode for input |
-| `/effort` | `effort/` | Adjust response effort level |
-| `/model` | `model/` | Switch the active model |
-| `/privacy-settings` | `privacy-settings/` | Manage privacy/data settings |
-| `/fast` | `fast/` | Toggle fast mode (shorter responses) |
-| `/brief` | `brief.ts` | Toggle brief output mode |
+Clear all queued tasks:
 
-## Memory & Knowledge
+```text
+/queue clear
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/memory` | `memory/` | Manage persistent memory (CLAUDE.md files) |
-| `/add-dir` | `add-dir/` | Add a directory to the project context |
-| `/files` | `files/` | List files in the current context |
+Pause queue execution:
 
-## MCP & Plugins
+```text
+/queue pause
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/mcp` | `mcp/` | Manage MCP server connections |
-| `/plugin` | `plugin/` | Install, remove, or manage plugins |
-| `/reload-plugins` | `reload-plugins/` | Reload all installed plugins |
-| `/skills` | `skills/` | View and manage skills |
+Resume queue execution:
 
-## Authentication
+```text
+/queue resume
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/login` | `login/` | Authenticate with Anthropic |
-| `/logout` | `logout/` | Sign out |
-| `/oauth-refresh` | `oauth-refresh/` | Refresh OAuth tokens |
+Show queue status:
 
-## Tasks & Agents
+```text
+/queue status
+```
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/tasks` | `tasks/` | Manage background tasks |
-| `/agents` | `agents/` | Manage sub-agents |
-| `/ultraplan` | `ultraplan.tsx` | Generate a detailed execution plan |
-| `/plan` | `plan/` | Enter planning mode |
+#### Example Workflow
 
-## Diagnostics & Status
+```text
+> Fix the TypeScript build errors
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/doctor` | `doctor/` | Run environment diagnostics |
-| `/status` | `status/` | Show system and session status |
-| `/stats` | `stats/` | Show session statistics |
-| `/cost` | `cost/` | Display token usage and estimated cost |
-| `/version` | `version.ts` | Show Claude Code version |
-| `/usage` | `usage/` | Show detailed API usage |
-| `/extra-usage` | `extra-usage/` | Show extended usage details |
-| `/rate-limit-options` | `rate-limit-options/` | View rate limit configuration |
+Claude begins working...
 
-## Installation & Setup
+> /queue Add missing test coverage
+Queued (#1)
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/install` | `install.tsx` | Install or update Claude Code |
-| `/upgrade` | `upgrade/` | Upgrade to the latest version |
-| `/init` | `init.ts` | Initialize a project (create CLAUDE.md) |
-| `/init-verifiers` | `init-verifiers.ts` | Set up verifier hooks |
-| `/onboarding` | `onboarding/` | Run the first-time setup wizard |
-| `/terminalSetup` | `terminalSetup/` | Configure terminal integration |
+> /queue Run lint and fix issues
+Queued (#2)
 
-## IDE & Desktop Integration
+> /queue Generate release notes
+Queued (#3)
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/bridge` | `bridge/` | Manage IDE bridge connections |
-| `/bridge-kick` | `bridge-kick.ts` | Force-restart the IDE bridge |
-| `/ide` | `ide/` | Open in IDE |
-| `/desktop` | `desktop/` | Hand off to the desktop app |
-| `/mobile` | `mobile/` | Hand off to the mobile app |
-| `/teleport` | `teleport/` | Transfer session to another device |
+Current Queue:
+1. Add missing test coverage
+2. Run lint and fix issues
+3. Generate release notes
+```
 
-## Remote & Environment
+After the active task finishes, Claude automatically proceeds through the queue while maintaining the same session context.
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/remote-env` | `remote-env/` | Configure remote environment |
-| `/remote-setup` | `remote-setup/` | Set up remote session |
-| `/env` | `env/` | View environment variables |
-| `/sandbox-toggle` | `sandbox-toggle/` | Toggle sandbox mode |
+#### Benefits
 
-## Misc
+* Reduces idle waiting between prompts
+* Enables long-running autonomous workflows
+* Allows users to batch related development tasks
+* Maintains context across sequential executions
+* Similar workflow experience to v0 prompt queuing
+* Particularly useful for large refactors, code reviews, testing, documentation, and release preparation
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/help` | `help/` | Show help and available commands |
-| `/exit` | `exit/` | Exit Claude Code |
-| `/copy` | `copy/` | Copy content to clipboard |
-| `/feedback` | `feedback/` | Send feedback to Anthropic |
-| `/release-notes` | `release-notes/` | View release notes |
-| `/rename` | `rename/` | Rename the current session |
-| `/tag` | `tag/` | Tag the current session |
-| `/insights` | `insights.ts` | Show codebase insights |
-| `/stickers` | `stickers/` | Easter egg — stickers |
-| `/good-claude` | `good-claude/` | Easter egg — praise Claude |
-| `/voice` | `voice/` | Toggle voice input mode |
-| `/chrome` | `chrome/` | Chrome extension integration |
-| `/issue` | `issue/` | File a GitHub issue |
-| `/statusline` | `statusline.tsx` | Customize the status line |
-| `/thinkback` | `thinkback/` | Replay Claude's thinking process |
-| `/thinkback-play` | `thinkback-play/` | Animated thinking replay |
-| `/passes` | `passes/` | Multi-pass execution |
-| `/x402` | `x402/` | x402 payment protocol integration |
+#### Potential Implementation
 
-## Internal / Debug Commands
+```typescript
+interface QueuedPrompt {
+  id: string
+  prompt: string
+  createdAt: number
+  status: 'queued' | 'running' | 'completed' | 'failed'
+}
 
-| Command | Source | Description |
-|---------|--------|-------------|
-| `/ant-trace` | `ant-trace/` | Anthropic-internal tracing |
-| `/autofix-pr` | `autofix-pr/` | Auto-fix PR issues |
-| `/backfill-sessions` | `backfill-sessions/` | Backfill session data |
-| `/break-cache` | `break-cache/` | Invalidate caches |
-| `/btw` | `btw/` | "By the way" interjection |
-| `/ctx_viz` | `ctx_viz/` | Context visualization (debug) |
-| `/debug-tool-call` | `debug-tool-call/` | Debug a specific tool call |
-| `/heapdump` | `heapdump/` | Dump heap for memory analysis |
-| `/hooks` | `hooks/` | Manage hook scripts |
-| `/mock-limits` | `mock-limits/` | Mock rate limits for testing |
-| `/perf-issue` | `perf-issue/` | Report performance issues |
-| `/reset-limits` | `reset-limits/` | Reset rate limit counters |
+interface SessionQueue {
+  active?: QueuedPrompt
+  pending: QueuedPrompt[]
+  history: QueuedPrompt[]
+}
+```
 
----
-
-## See Also
-
-- [Architecture](architecture.md) — How the command system fits into the pipeline
-- [Tools Reference](tools.md) — Agent tools (different from slash commands)
-- [Exploration Guide](exploration-guide.md) — Finding command source code
+The queue should be session-scoped and persisted alongside existing session state so queued work survives application restarts and `/resume` operations.
